@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="dbdeploy_example" default="default">
+
+    <property name="db.driver" value="org.hsqldb.jdbcDriver" />
+    <property name="db.url" value="jdbc:hsqldb:file:db/testdb;shutdown=true" />
+
+    <path id="hsql.classpath">
+        <fileset dir=".">
+            <include name="hsqldb*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="dbdeploy.classpath">
+        <!-- include the dbdeploy-ant jar -->
+        <fileset dir="..">
+            <include name="dbdeploy-ant-*.jar"/>
+        </fileset>
+
+        <!-- the dbdeploy task also needs the database driver jar on the classpath -->
+        <path refid="hsql.classpath" />
+
+    </path>
+
+    <taskdef name="dbdeploy" classname="com.dbdeploy.AntTarget" classpathref="dbdeploy.classpath"/>
+
+    <target name="default" depends="clean, update-database"/>
+
+    <target name="clean" depends="drop-and-create-database, create-changelog-table"/>
+
+    <target name="create-changelog-table">
+        <sql driver="${db.driver}" url="${db.url}"
+             userid="sa" password="" classpathref="hsql.classpath" >
+            <fileset file="../scripts/createSchemaVersionTable.hsql.sql"/>
+        </sql>
+    </target>
+
+    <target name="update-database" description="generate a sql upgrade script">
+
+        <!-- if you don't specify an output file, dbdeploy will apply the changes for you
+
+        you may need to specify delimiter and delimitertype for your scripts to be split properly - these
+         work the same as in the ant sql task, see http://ant.apache.org/manual/CoreTasks/sql.html
+        -->
+        <dbdeploy driver="${db.driver}" url="${db.url}"
+                  userid="sa"
+                  password=""
+                  dir="."
+                />
+
+    </target>
+ 
+      
+     <target name="update-2" description="generate a sql upgrade script">
+
+        <!-- use dbdeploy to generate the change script -->
+         <!-- REMOVE THIS LINE
+
+	 <dbdeploy driver="${db.driver}" url="${db.url}"
+                  userid="sa"
+                  password=""
+                  dir="."
+                  outputfile="./update2.sql"
+                  undoOutputfile="./undo2.sql"
+                  lastChangeToApply="2"
+                  dbms="hsql"
+                />
+
+           REMOVE THIS LINE -->
+
+        <!-- now apply the changescript to the database -->
+
+        <!-- REMOVE THIS LINE
+ 
+        <sql driver="${db.driver}" url="${db.url}"
+             userid="sa" password="" classpathref="hsql.classpath">
+            <fileset file="update2.sql"/>
+        </sql>
+
+	REMOVE THIS LINE -->
+
+    </target>
+    
+
+    <target name="update-latest" description="generate a sql upgrade script">
+
+        <!-- use dbdeploy to generate the change script -->
+        <dbdeploy driver="${db.driver}" url="${db.url}"
+                  userid="sa"
+                  password=""
+                  dir="."
+                  outputfile="./update_latest.sql"
+                  undoOutputfile="./undo_latest.sql"
+                  dbms="hsql"
+                />
+
+        <!-- now apply the changescript to the database -->
+        <sql driver="${db.driver}" url="${db.url}"
+             userid="sa" password="" classpathref="hsql.classpath">
+            <fileset file="update_latest.sql"/>
+        </sql>
+
+    </target>
+
+ <target name="rollback-2" description="roll-back database">
+
+        <!-- now apply the changescript to the database -->
+
+	<!-- REMOVE THIS LINE
+
+        <sql driver="${db.driver}" url="${db.url}"
+             userid="sa" password="" classpathref="hsql.classpath">
+            <fileset file="undo2.sql"/>
+        </sql>
+
+        REMOVE THIS LINE --> 
+ 
+    </target>
+
+
+     <target name="rollback-latest" description="roll-back database">
+
+        <!-- now apply the changescript to the database -->
+        <sql driver="${db.driver}" url="${db.url}"
+             userid="sa" password="" classpathref="hsql.classpath">
+            <fileset file="undo_latest.sql"/>
+        </sql>
+
+    </target>
+
+
+    <target name="dump-tables">
+        <sql driver="${db.driver}" url="${db.url}"
+             userid="sa" password="" print="true" classpathref="hsql.classpath">
+            
+            select * from changelog;
+            select * from test;
+        </sql>
+    </target>
+
+    <target name="drop-and-create-database">
+        <delete dir="db"/>
+        <mkdir dir="db"/>
+    </target>
+
+</project>
